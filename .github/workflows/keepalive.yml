@@ -1,0 +1,33 @@
+# .github/workflows/keepalive.yml
+#
+# Keeps the free Render web service awake so it doesn't need a "wake-up" refresh.
+#
+# Render's free tier spins the app down after ~15 minutes of no traffic, and the
+# next visit then takes ~50 seconds to wake. This workflow pings the app every
+# ~5 minutes so it never goes idle long enough to sleep.
+#
+# Because this repo is PUBLIC, GitHub Actions minutes are unlimited and free.
+#
+# Notes:
+# - GitHub may delay scheduled runs by a few minutes under load, so 5 min gives
+#   margin against Render's 15-minute sleep threshold.
+# - GitHub disables scheduled workflows after ~60 days of NO repo activity; any
+#   push re-enables them. For an app you tweak occasionally, that's fine.
+# - You can also run it by hand from the Actions tab (workflow_dispatch).
+
+name: Keep alive
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # every 5 minutes
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the live app
+        run: |
+          curl -sS -m 60 -o /dev/null \
+            -w "pinged paper-trail -> HTTP %{http_code} in %{time_total}s\n" \
+            https://paperpilot-s137.onrender.com/api/today || true
