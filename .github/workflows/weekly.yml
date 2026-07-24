@@ -1,0 +1,45 @@
+# .github/workflows/weekly.yml
+#
+# Runs the WEEKLY paper fetch automatically, for free, using GitHub Actions.
+# Every Monday morning it fetches new arXiv papers, enriches them with the LLM,
+# and appends them to your Neon Postgres database — the SAME database your
+# deployed app reads from, so new papers just appear in your feed.
+#
+# It uses repository SECRETS (never commit keys). See the README for how to add:
+#   DATABASE_URL   -> your Neon Postgres URL
+#   GROQ_API_KEY   -> your Groq key
+#   LLM_PROVIDER   -> (optional) defaults to groq
+#
+# You can also trigger it by hand from the Actions tab (workflow_dispatch).
+
+name: Weekly paper fetch
+
+on:
+  schedule:
+    # Cron is in UTC. "0 13 * * 1" = 13:00 UTC every Monday (~9am US Eastern).
+    - cron: "0 13 * * 1"
+  workflow_dispatch: {}   # lets you run it manually from the GitHub UI
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run the weekly fetch
+        env:
+          # These come from your repo's Settings -> Secrets and variables -> Actions
+          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER || 'groq' }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ secrets.GROQ_MODEL || 'llama-3.3-70b-versatile' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python -m cli.main --mode weekly

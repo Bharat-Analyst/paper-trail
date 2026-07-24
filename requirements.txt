@@ -1,0 +1,35 @@
+# PaperPilot Python dependencies.
+# All of these ship as pre-built "wheels" (no C compiler needed), so they
+# install cleanly even without Xcode Command Line Tools.
+#
+# Install with:  pip install -r requirements.txt
+
+# --- Web framework + server ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# --- Data validation (FastAPI uses this) ---
+pydantic==2.10.4
+
+# --- Database ORM ---
+SQLAlchemy==2.0.36
+# Postgres driver for production (Neon). Pure binary wheel, no compiler needed.
+psycopg2-binary==2.9.10
+
+# --- HTTP client for LLM providers + arXiv (simple + synchronous) ---
+requests==2.32.3
+
+# --- Config + secrets ---
+PyYAML==6.0.2
+python-dotenv==1.0.1
+
+# --- App icon generation (scripts/make_icons.py) ---
+pillow==11.1.0
+
+# --- Web Push notifications (Phase 2) ---
+pywebpush==2.0.0
+py-vapid==1.9.1
+cryptography==44.0.0
+
+# --- In-process scheduler for local notification nudges (Phase 2) ---
+APScheduler==3.11.0

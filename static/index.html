@@ -1,0 +1,252 @@
+<!--
+  index.html — Paper Trail. Editorial, print-inspired PWA.
+  Serif titles, mono metadata, near-monochrome, hairline rules, no emoji.
+-->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#FDFCFA" />
+<meta name="description" content="Turn research-paper reading into an active-learning habit." />
+<link rel="manifest" href="/manifest.json" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Paper Trail" />
+<title>Paper Trail</title>
+
+<!-- Fonts: serif (titles) + sans (UI) + mono (metadata) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/styles.css" />
+
+<main id="app-main">
+
+  <!-- ============ TODAY ============ -->
+  <section id="view-today" class="view">
+    <div class="today-top">
+      <span class="mono muted" id="today-daymeta">—</span>
+      <span class="streak-badge mono hidden" id="today-streak"></span>
+    </div>
+
+    <div id="today-body">
+      <div class="today-label mono muted" id="today-label"></div>
+      <h1 class="serif today-title" id="today-title">Loading…</h1>
+      <p class="today-idea" id="today-idea"></p>
+
+      <div class="stat-row">
+        <div class="stat"><div class="stat-k mono">Difficulty</div><div class="stat-v dots" id="today-diff"></div></div>
+        <div class="stat"><div class="stat-k mono">Time</div><div class="stat-v mono" id="today-time"></div></div>
+        <div class="stat"><div class="stat-k mono">Math</div><div class="stat-v mono" id="today-math"></div></div>
+      </div>
+
+      <div class="rel-lines">
+        <div class="rel mono" id="today-buildson"></div>
+        <div class="rel mono" id="today-unlocks"></div>
+      </div>
+
+      <button class="btn btn-filled full" id="today-start">Start reading</button>
+      <div class="two-btn">
+        <button class="btn btn-outline" id="today-toohard">Too hard today</button>
+        <button class="btn btn-outline" id="today-alreadyread">Already read it</button>
+      </div>
+
+      <div class="today-footer">
+        <span class="mono muted" id="today-queued"></span>
+        <button class="link-mono" id="today-seeall">See all <span data-ic="chevron-right"></span></button>
+      </div>
+    </div>
+
+    <div id="today-empty" class="empty-note hidden"></div>
+  </section>
+
+  <!-- ============ QUEUE ============ -->
+  <section id="view-queue" class="view hidden">
+    <div class="queue-head">
+      <div>
+        <h1 class="serif queue-title">Paper trail</h1>
+        <div class="mono muted" id="queue-subline"></div>
+      </div>
+      <div class="queue-actions">
+        <button class="icon-btn" id="queue-search-toggle" aria-label="Search" data-ic="search"></button>
+        <button class="icon-btn" id="queue-filter-toggle" aria-label="Filters" data-ic="sliders"></button>
+      </div>
+    </div>
+
+    <div class="progress-line">
+      <div class="pbar"><div class="pbar-fill" id="queue-pbar"></div></div>
+      <span class="mono muted" id="queue-pct"></span>
+    </div>
+
+    <!-- Collapsible panel: search + filters + fetch/request -->
+    <div id="queue-panel" class="queue-panel hidden">
+      <div class="search-wrap">
+        <span class="search-ic" data-ic="search"></span>
+        <input id="search" class="search-input" type="search" placeholder="Search title, idea, author" autocomplete="off" />
+      </div>
+      <div class="filter-row">
+        <select id="f-sort" class="select">
+          <option value="recommended">Recommended</option>
+          <option value="difficulty">Easiest first</option>
+          <option value="reading_time">Shortest first</option>
+          <option value="year">Newest</option>
+          <option value="relevance">Most relevant</option>
+        </select>
+        <select id="f-status" class="select">
+          <option value="unread">To read</option><option value="read">Read</option><option value="all">All</option>
+        </select>
+        <select id="f-recency" class="select">
+          <option value="">Any time</option><option value="week">Added this week</option><option value="month">Added this month</option>
+        </select>
+        <select id="f-year" class="select"><option value="">All years</option></select>
+        <select id="f-topic" class="select"><option value="">All topics</option></select>
+        <select id="f-diff" class="select">
+          <option value="">Any difficulty</option>
+          <option value="1">Difficulty 1 or less</option><option value="2">Difficulty 2 or less</option>
+          <option value="3">Difficulty 3 or less</option><option value="4">Difficulty 4 or less</option>
+          <option value="5">Difficulty 5 or less</option>
+        </select>
+      </div>
+      <div class="panel-actions">
+        <form id="request-form" class="request-row">
+          <input id="request-input" class="request-input" type="text" placeholder="Add a paper by arXiv link, ID, or title" autocomplete="off" />
+          <button id="request-btn" class="btn btn-outline" type="submit">Add</button>
+        </form>
+        <button id="fetch-btn" class="btn btn-outline full">Fetch new papers</button>
+      </div>
+      <div class="filter-meta">
+        <span id="result-count" class="mono muted"></span>
+        <button id="clear-filters" class="link-mono hidden">Clear filters</button>
+      </div>
+    </div>
+
+    <div id="review-section" class="hidden">
+      <div class="sec-label mono">Due for review<span id="review-count"></span></div>
+      <div id="review-list"></div>
+    </div>
+
+    <div class="sec-label mono" id="upnext-label">All papers</div>
+    <div id="queue-list"></div>
+    <button id="load-more" class="btn btn-outline full hidden">Load more</button>
+  </section>
+
+  <!-- ============ PROGRESS ============ -->
+  <section id="view-progress" class="view hidden">
+    <h1 class="serif page-title">Progress</h1>
+    <div class="prog-stats">
+      <div class="pstat"><div class="pstat-v mono" id="stat-read">–</div><div class="pstat-k mono">Papers read</div></div>
+      <div class="pstat"><div class="pstat-v mono" id="stat-streak">–</div><div class="pstat-k mono">Day streak</div></div>
+      <div class="pstat"><div class="pstat-v mono" id="stat-avg">–</div><div class="pstat-k mono">Avg score</div></div>
+      <div class="pstat"><div class="pstat-v mono" id="stat-pct">–</div><div class="pstat-k mono">Complete</div></div>
+    </div>
+
+    <div class="tier-progress-wrap">
+      <div class="tier-progress-head mono">
+        <span>Overall progress</span>
+        <span id="overall-count" class="muted"></span>
+      </div>
+      <div class="pbar"><div class="pbar-fill" id="overall-fill"></div></div>
+    </div>
+
+    <div class="sec-label mono" style="margin-top:28px">Recent study sessions</div>
+    <div id="history-list"></div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section id="view-settings" class="view hidden">
+    <h1 class="serif page-title">Settings</h1>
+
+    <div class="set-row">
+      <div class="set-title">Appearance</div>
+      <div class="segmented" id="theme-seg">
+        <button class="seg-btn" data-theme-val="light">Light</button>
+        <button class="seg-btn" data-theme-val="dark">Dark</button>
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div>
+        <div class="set-title">Notifications</div>
+        <div class="set-sub mono muted" id="notif-status">Gentle nudges to read a paper.</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="notif-toggle" /><span class="slider"></span></label>
+    </div>
+    <div id="notif-details" class="hidden">
+      <div class="set-row">
+        <div class="set-title">Nudges per day</div>
+        <select id="notif-frequency" class="select">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="6">6</option>
+        </select>
+      </div>
+      <div class="set-row">
+        <div class="set-title">Quiet hours</div>
+        <div class="quiet-hours"><select id="quiet-start" class="select"></select><span class="mono muted">to</span><select id="quiet-end" class="select"></select></div>
+      </div>
+      <button id="notif-test" class="btn btn-outline full">Send a test notification</button>
+    </div>
+    <p class="mono muted set-note" id="platform-note"></p>
+  </section>
+
+</main>
+
+<!-- ============ TUTOR ============ -->
+<div id="tutor-overlay" class="overlay hidden">
+  <header class="overlay-header">
+    <button id="tutor-close" class="icon-btn" aria-label="Close" data-ic="x"></button>
+    <span class="overlay-title serif" id="tutor-paper-title">Tutor</span>
+    <span style="width:40px"></span>
+  </header>
+  <div id="tutor-thread" class="tutor-thread"></div>
+  <form id="tutor-form" class="tutor-input-bar">
+    <textarea id="tutor-input" class="tutor-input" rows="1" placeholder="Type your answer" autocomplete="off"></textarea>
+    <button id="tutor-send" class="btn btn-filled tutor-send" type="submit">Send</button>
+  </form>
+</div>
+
+<!-- ============ READER ============ -->
+<div id="reader-overlay" class="overlay hidden">
+  <header class="overlay-header">
+    <button id="reader-close" class="icon-btn" aria-label="Close" data-ic="x"></button>
+    <span class="overlay-title serif" id="reader-title">Reader</span>
+    <a id="reader-newtab" class="link-mono" href="#" target="_blank" rel="noopener">Open in browser</a>
+  </header>
+  <iframe id="reader-frame" class="reader-frame" title="Paper reader"></iframe>
+</div>
+
+<!-- ============ NOTES MODAL ============ -->
+<div id="notes-modal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title serif">Notes</span>
+      <button id="notes-close" class="icon-btn" aria-label="Close" data-ic="x"></button>
+    </div>
+    <div class="modal-paper" id="notes-paper-title"></div>
+    <textarea id="notes-text" class="notes-text" rows="6" placeholder="Your notes on this paper"></textarea>
+    <button id="notes-save" class="btn btn-filled full">Save</button>
+  </div>
+</div>
+
+<!-- ============ NAV ============ -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-view="today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span class="nav-text mono">Today</span>
+  </button>
+  <button class="nav-btn" data-view="queue">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span class="nav-text mono">Queue</span>
+  </button>
+  <button class="nav-btn" data-view="progress">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span class="nav-text mono">Progress</span>
+  </button>
+  <button class="nav-btn" data-view="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="nav-text mono">Settings</span>
+  </button>
+</nav>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="/js/app.js"></script>
+<script src="/js/tutor.js"></script>
+<script src="/js/push.js"></script>

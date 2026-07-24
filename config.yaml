@@ -1,0 +1,100 @@
+# config.yaml — PaperPilot's non-secret settings.
+#
+# Anything sensitive (API keys, database URL, VAPID keys) lives in your .env
+# file, NEVER here. This file is safe to commit to GitHub.
+#
+# You can edit these values freely; the app reads them at startup.
+
+# ---------------------------------------------------------------------------
+# Topics you care about. Used as friendly tags in the UI and as a hint to the
+# enrichment step. Add or remove freely.
+# ---------------------------------------------------------------------------
+topics:
+  - embeddings
+  - foundations
+  - optimization
+  - transformers
+  - llm
+  - rag
+  - reasoning
+  - agents
+  - fine-tuning
+  - alignment
+  - architecture
+
+# ---------------------------------------------------------------------------
+# arXiv settings for the WEEKLY job (`--mode weekly`), which fetches brand-new
+# papers from the last 7 days.
+#
+# categories: official arXiv category codes to watch.
+#   cs.AI  = Artificial Intelligence
+#   cs.CL  = Computation & Language (NLP)
+#   cs.LG  = Machine Learning
+#   cs.IR  = Information Retrieval (search / RAG)
+#   stat.ML = Machine Learning (statistics side)
+#   math.OC = Optimization & Control
+# keywords: only keep new papers whose title/abstract mention one of these.
+#           Keeps the weekly firehose relevant to what you're learning.
+# ---------------------------------------------------------------------------
+arxiv:
+  categories:
+    - cs.AI
+    - cs.CL
+    - cs.LG
+    - cs.IR
+    - stat.ML
+    - math.OC
+  keywords:
+    - large language model
+    - LLM
+    - retrieval-augmented
+    - RAG
+    - transformer
+    - attention
+    - agent
+    - fine-tuning
+    - instruction tuning
+    - reasoning
+    - chain-of-thought
+    - embedding
+  days: 7            # look back this many days
+  max_per_category: 40   # cap results per category so weekly stays fast
+
+# ---------------------------------------------------------------------------
+# Ranker weights. The "read next" score for an unread paper is:
+#
+#   score =  relevance_weight  * relevance_score        (higher = read sooner)
+#          - difficulty_weight * difficulty             (harder = read later)
+#          - tier_weight       * tier                   (later tier = read later)
+#          + prereq_bonus      * (prereqs already read?) (unlocks = read sooner)
+#          + new_bonus         * (is it new this week?)  (small nudge to the top)
+#
+# Tweak these to change how aggressively the queue favours easy/foundational
+# papers vs. highly-relevant-but-hard ones.
+# ---------------------------------------------------------------------------
+ranker:
+  relevance_weight: 1.0
+  difficulty_weight: 1.2
+  prereq_bonus: 2.0
+  new_bonus: 1.0
+  # Extra penalty when a paper is harder than your inferred level (which the
+  # "Too hard today" button nudges down).
+  level_gap_weight: 1.0
+  # How hard a "Too hard today" paper is pushed down while it's snoozed, and for
+  # how many days the snooze lasts.
+  snooze_penalty: 100.0
+  snooze_days: 14
+
+# ---------------------------------------------------------------------------
+# Notification defaults (Phase 2). These are just the starting values; you can
+# change frequency and quiet hours live from the app's Settings screen.
+#
+# frequency: how many nudges per active day (spread evenly across the day).
+# quiet_start / quiet_end: 24h clock. No nudges are sent inside this window
+#   (e.g. 22 -> 8 means "quiet from 10pm to 8am").
+# ---------------------------------------------------------------------------
+notifications:
+  frequency: 3
+  quiet_start: 22
+  quiet_end: 8
+  message: "Time for a 2-minute paper break? Your next paper is waiting."

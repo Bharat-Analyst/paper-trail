@@ -1,0 +1,28 @@
+# --- Secrets: NEVER commit these ---
+.env
+
+# --- Python virtual environment ---
+.venv/
+venv/
+env/
+myenv/
+
+# --- Local SQLite database + its journals ---
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# --- Python caches ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# --- OS / editor junk ---
+.DS_Store
+.idea/
+.vscode/
+
+# NOTE: generated app icons in static/icons/ ARE committed on purpose so the
+# PWA works after a fresh clone. Run scripts/make_icons.py to (re)generate them.

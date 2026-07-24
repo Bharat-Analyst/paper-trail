@@ -1,0 +1,46 @@
+# render.yaml — one-click-ish deploy config for Render (https://render.com).
+#
+# This describes a single FREE web service that runs BOTH the API and the PWA.
+# When you connect this repo to Render, it reads this file and pre-fills the
+# service for you. You then paste your secret values in the dashboard.
+#
+# The README walks through this step by step.
+
+services:
+  - type: web
+    name: paperpilot
+    runtime: python
+    plan: free
+    # Install dependencies.
+    buildCommand: "pip install -r requirements.txt"
+    # Start the server. Render provides the $PORT env var; we must bind to it
+    # and to 0.0.0.0 so the service is reachable.
+    startCommand: "uvicorn app.main_api:app --host 0.0.0.0 --port $PORT"
+    # Pin a Python version that matches local development.
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+
+      # --- LLM provider ---
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false            # sync:false = you type the secret in the dashboard
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+
+      # --- Database (paste your Neon Postgres URL in the dashboard) ---
+      - key: DATABASE_URL
+        sync: false
+
+      # --- Web Push (optional; leave blank until you add push) ---
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:you@example.com
+
+      # --- Google Sheets export stays OFF ---
+      - key: GOOGLE_SHEETS_ENABLED
+        value: "false"
