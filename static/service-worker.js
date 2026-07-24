@@ -10,7 +10,7 @@
    Bump CACHE_VERSION whenever you change cached files, so browsers fetch fresh.
    ========================================================================= */
 
-const CACHE_VERSION = "papertrail-v10";
+const CACHE_VERSION = "papertrail-v11";
 
 // The core files that make up the app "shell".
 const SHELL_ASSETS = [

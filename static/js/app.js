@@ -61,56 +61,87 @@ $$(".nav-btn").forEach((b) => b.addEventListener("click", () => showView(b.datas
    TODAY
    ========================================================================= */
 let todayPaper = null;
-async function loadToday() {
-  try {
-    const d = await api.get("/api/today");
-    todayPaper = d.paper;
-    const body = $("#today-body"), empty = $("#today-empty");
-    if (!d.paper) {
-      body.classList.add("hidden");
-      empty.classList.remove("hidden");
-      empty.textContent = "You're all caught up — no papers left to read. Fetch new papers from the Queue.";
-      return;
-    }
-    body.classList.remove("hidden"); empty.classList.add("hidden");
+let todayBusy = false;
 
-    $("#today-daymeta").textContent = `${(d.weekday || "").toUpperCase()} · DAY ${d.day_number}`;
-    const streak = $("#today-streak");
-    if (d.streak > 0) { streak.textContent = `${d.streak} day streak`; streak.classList.remove("hidden"); }
-    else streak.classList.add("hidden");
+/* Render the Today screen from a payload (shared by initial load + action buttons). */
+function renderToday(d) {
+  todayPaper = d.paper;
+  const body = $("#today-body"), empty = $("#today-empty");
+  if (!d.paper) {
+    body.classList.add("hidden");
+    empty.classList.remove("hidden");
+    empty.textContent = "You're all caught up — no papers left. Fetch new papers from the Queue.";
+    return;
+  }
+  body.classList.remove("hidden"); empty.classList.add("hidden");
 
-    const p = d.paper;
-    const posBit = d.total ? ` · ${pad(d.position)} OF ${pad(d.total)}` : "";
-    $("#today-label").textContent = `TODAY'S PAPER${posBit}`;
-    $("#today-title").textContent = p.title;
-    $("#today-idea").textContent = p.core_idea || "";
-    $("#today-diff").textContent = dots(p.difficulty || 3);
-    $("#today-time").textContent = `${p.est_reading_minutes || "?"} MIN`;
-    $("#today-math").textContent = p.skip_the_math ? "SKIPPABLE" : "REQUIRED";
+  $("#today-daymeta").textContent = `${(d.weekday || "").toUpperCase()} · DAY ${d.day_number}`;
+  const streak = $("#today-streak");
+  if (d.streak > 0) { streak.textContent = `${d.streak} day streak`; streak.classList.remove("hidden"); }
+  else streak.classList.add("hidden");
 
-    const bo = (p.builds_on_papers || []);
-    const un = (p.unlocks || []);
-    $("#today-buildson").innerHTML = icon("check") +
-      ` <span>BUILDS ON — ${bo.length ? esc(bo.join(", ")) : "foundational, no prerequisites"}</span>`;
-    $("#today-buildson").classList.toggle("empty", bo.length === 0);
-    $("#today-unlocks").innerHTML = icon("arrow-right") +
-      ` <span>UNLOCKS — ${un.length ? esc(un.join(", ")) : "nothing yet"}</span>`;
-    $("#today-unlocks").classList.toggle("empty", un.length === 0);
+  const p = d.paper;
+  const posBit = d.total ? ` · ${pad(d.position)} OF ${pad(d.total)}` : "";
+  $("#today-label").textContent = `TODAY'S PAPER${posBit}`;
+  $("#today-title").textContent = p.title;
+  $("#today-idea").textContent = p.core_idea || "";
+  $("#today-diff").textContent = dots(p.difficulty || 3);
+  $("#today-time").textContent = `${p.est_reading_minutes || "?"} MIN`;
+  $("#today-math").textContent = p.skip_the_math ? "SKIPPABLE" : "REQUIRED";
 
-    $("#today-queued").textContent = `${d.queued_this_week} more queued this week`;
-  } catch (err) { toast("Couldn't load today."); console.error(err); }
+  const bo = (p.builds_on_papers || []);
+  const un = (p.unlocks || []);
+  $("#today-buildson").innerHTML = icon("check") +
+    ` <span>BUILDS ON — ${bo.length ? esc(bo.join(", ")) : "foundational, no prerequisites"}</span>`;
+  $("#today-buildson").classList.toggle("empty", bo.length === 0);
+  $("#today-unlocks").innerHTML = icon("arrow-right") +
+    ` <span>UNLOCKS — ${un.length ? esc(un.join(", ")) : "nothing yet"}</span>`;
+  $("#today-unlocks").classList.toggle("empty", un.length === 0);
+
+  $("#today-queued").textContent = `${d.queued_this_week} more queued this week`;
 }
-$("#today-start").addEventListener("click", () => { if (todayPaper) window.Tutor.open(todayPaper); });
+
+async function loadToday() {
+  try { renderToday(await api.get("/api/today")); }
+  catch (err) { toast("Couldn't load today."); console.error(err); }
+}
+
+/* Disable the Today buttons + show a "working" label while a request is in flight. */
+function setTodayBusy(on, clickedSel, label) {
+  todayBusy = on;
+  ["#today-start", "#today-toohard", "#today-alreadyread"].forEach((s) => ($(s).disabled = on));
+  if (clickedSel) {
+    const b = $(clickedSel);
+    if (on) { b.dataset.orig = b.textContent; b.textContent = label; }
+    else if (b.dataset.orig) { b.textContent = b.dataset.orig; delete b.dataset.orig; }
+  }
+}
+
+$("#today-start").addEventListener("click", () => { if (todayPaper && !todayBusy) window.Tutor.open(todayPaper); });
 $("#today-seeall").addEventListener("click", () => showView("queue"));
+
 $("#today-toohard").addEventListener("click", async () => {
-  if (!todayPaper) return;
-  try { await api.post(`/api/papers/${todayPaper.id}/too-hard`); toast("Deferred — served something easier"); loadToday(); }
-  catch (err) { toast("Couldn't defer."); console.error(err); }
+  if (!todayPaper || todayBusy) return;
+  setTodayBusy(true, "#today-toohard", "Finding an easier one…");
+  try {
+    // The endpoint already returns the next paper — render it directly (one round trip).
+    const d = await api.post(`/api/papers/${todayPaper.id}/too-hard`);
+    renderToday(d);
+    toast("Skipped — here's an easier paper");
+  } catch (err) { toast("Couldn't skip that one. Try again."); console.error(err); }
+  finally { setTodayBusy(false, "#today-toohard"); }
 });
+
 $("#today-alreadyread").addEventListener("click", async () => {
-  if (!todayPaper) return;
-  try { await api.post(`/api/papers/${todayPaper.id}/read`); toast("Marked as read"); loadToday(); loadProgress(); }
-  catch (err) { toast("Couldn't update."); console.error(err); }
+  if (!todayPaper || todayBusy) return;
+  setTodayBusy(true, "#today-alreadyread", "Updating…");
+  try {
+    await api.post(`/api/papers/${todayPaper.id}/read`);
+    await loadToday();
+    loadProgress();
+    toast("Marked as read");
+  } catch (err) { toast("Couldn't update. Try again."); console.error(err); }
+  finally { setTodayBusy(false, "#today-alreadyread"); }
 });
 
 /* =========================================================================
