@@ -109,7 +109,7 @@ async function loadToday() {
 /* Disable the Today buttons + show a "working" label while a request is in flight. */
 function setTodayBusy(on, clickedSel, label) {
   todayBusy = on;
-  ["#today-start", "#today-toohard", "#today-alreadyread"].forEach((s) => ($(s).disabled = on));
+  ["#today-read", "#today-start", "#today-toohard", "#today-alreadyread"].forEach((s) => ($(s).disabled = on));
   if (clickedSel) {
     const b = $(clickedSel);
     if (on) { b.dataset.orig = b.textContent; b.textContent = label; }
@@ -117,6 +117,7 @@ function setTodayBusy(on, clickedSel, label) {
   }
 }
 
+$("#today-read").addEventListener("click", () => { if (todayPaper && !todayBusy) openReader(todayPaper); });
 $("#today-start").addEventListener("click", () => { if (todayPaper && !todayBusy) window.Tutor.open(todayPaper); });
 $("#today-seeall").addEventListener("click", () => showView("queue"));
 
